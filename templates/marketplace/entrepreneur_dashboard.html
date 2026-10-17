@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}My business | HunarHub{% endblock %}
+{% block content %}
+<section class="wrap section">
+  <div class="head-row">
+    <div>
+      <h1 class="h-page">{{ p.business_name }}</h1>
+      <span class="badge {% if p.is_verified %}accepted{% else %}pending{% endif %}">{% if p.is_verified %}Approved{% else %}Waiting for admin approval{% endif %}</span>
+    </div>
+    <div class="actions">
+      <a class="btn quiet" href="{% url 'entrepreneur_detail' p.pk %}">View public page</a>
+      <a class="btn quiet" href="{% url 'profile_edit' %}">Edit profile</a>
+      <form method="post" action="{% url 'toggle_availability' %}">{% csrf_token %}
+        <button class="btn {% if p.is_available %}quiet{% else %}primary{% endif %}">{% if p.is_available %}Pause new requests{% else %}Start taking requests{% endif %}</button></form>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>₹{{ earned|floatformat:"-2" }}</b><span>Earned from completed work</span></div>
+    <div class="stat"><b>₹{{ in_progress|floatformat:"-2" }}</b><span>In progress</span></div>
+    <div class="stat"><b>{{ pending_count }}</b><span>Waiting for your answer</span></div>
+  </div>
+
+  <h2>Service requests</h2>
+  <div class="stack">
+    {% for r in requests %}
+    <div class="panel row">
+      <div class="item-main"><h3>{{ r.service.title }}</h3>
+        <p class="muted">From {{ r.customer.username }}{% if r.customer.phone %}, {{ r.customer.phone }}{% endif %}{% if r.preferred_date %}. Wanted by {{ r.preferred_date|date:"j M" }}{% endif %}</p>
+        {% if r.message %}<p>{{ r.message }}</p>{% endif %}</div>
+      <div class="price">₹{{ r.service.price|floatformat:"-2" }}</div>
+      <span class="badge {{ r.status }}">{{ r.get_status_display }}</span>
+      <div class="actions">
+        {% if r.status == 'pending' %}
+          <form method="post" action="{% url 'request_action' r.pk 'accept' %}">{% csrf_token %}<button class="btn small primary">Accept</button></form>
+          <form method="post" action="{% url 'request_action' r.pk 'reject' %}">{% csrf_token %}<button class="btn small quiet">Reject</button></form>
+        {% elif r.status == 'accepted' %}
+          <form method="post" action="{% url 'request_action' r.pk 'complete' %}">{% csrf_token %}<button class="btn small primary">Mark as done</button></form>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}<p class="muted">No service requests yet.</p>{% endfor %}
+  </div>
+
+  <h2>Product orders</h2>
+  <div class="stack">
+    {% for o in orders %}
+    <div class="panel row">
+      <div class="item-main"><h3>{{ o.quantity }} x {{ o.product.name }}</h3>
+        <p class="muted">From {{ o.customer.username }}{% if o.customer.phone %}, {{ o.customer.phone }}{% endif %}, {{ o.created_at|date:"j M" }}</p></div>
+      <div class="price">₹{{ o.total_price|floatformat:"-2" }}</div>
+      <span class="badge {{ o.status }}">{{ o.get_status_display }}</span>
+      <div class="actions">
+        {% if o.status == 'placed' %}
+          <form method="post" action="{% url 'order_action' o.pk 'confirm' %}">{% csrf_token %}<button class="btn small primary">Confirm</button></form>
+          <form method="post" action="{% url 'order_action' o.pk 'cancel' %}">{% csrf_token %}<button class="btn small quiet">Cancel</button></form>
+        {% elif o.status == 'confirmed' %}
+          <form method="post" action="{% url 'order_action' o.pk 'complete' %}">{% csrf_token %}<button class="btn small primary">Mark as delivered</button></form>
+          <form method="post" action="{% url 'order_action' o.pk 'cancel' %}">{% csrf_token %}<button class="btn small quiet">Cancel</button></form>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}<p class="muted">No product orders yet.</p>{% endfor %}
+  </div>
+
+  <div class="head-row"><h2>Your services</h2><a class="btn small primary" href="{% url 'service_form' %}">Add a service</a></div>
+  <div class="stack">
+    {% for s in services %}
+    <div class="panel row"><div class="item-main"><h3>{{ s.title }}</h3></div><div class="price">₹{{ s.price|floatformat:"-2" }}</div>
+      <div class="actions"><a class="btn small quiet" href="{% url 'service_form' s.pk %}">Edit</a>
+      <form method="post" action="{% url 'item_remove' 'services' s.pk %}">{% csrf_token %}<button class="btn small quiet">Remove</button></form></div></div>
+    {% empty %}<p class="muted">You have not listed any services.</p>{% endfor %}
+  </div>
+
+  <div class="head-row"><h2>Your products</h2><a class="btn small primary" href="{% url 'product_form' %}">Add a product</a></div>
+  <div class="stack">
+    {% for pr in products %}
+    <div class="panel row"><div class="item-main"><h3>{{ pr.name }}</h3><p class="muted">{{ pr.stock }} in stock</p></div><div class="price">₹{{ pr.price|floatformat:"-2" }}</div>
+      <div class="actions"><a class="btn small quiet" href="{% url 'product_form' pr.pk %}">Edit</a>
+      <form method="post" action="{% url 'item_remove' 'products' pr.pk %}">{% csrf_token %}<button class="btn small quiet">Remove</button></form></div></div>
+    {% empty %}<p class="muted">You have not listed any products.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

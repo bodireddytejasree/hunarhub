@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="wrap">
+    <h1>Hire a tailor. Buy from a potter. Back the hands that make it.</h1>
+    <p class="lead">HunarHub connects cobblers, potters, tailors, artisans and small vendors with customers nearby.</p>
+    <form class="search" action="{% url 'browse' %}" method="get">
+      <input name="q" placeholder="What do you need? For example, blouse stitching" aria-label="What do you need">
+      <input name="location" placeholder="Town or area" aria-label="Town or area">
+      <button class="btn primary">Search</button>
+    </form>
+    <div class="chips">
+      {% for c in categories %}<a href="{% url 'browse' %}?category={{ c.pk }}">{{ c.name }} ({{ c.n }})</a>{% endfor %}
+    </div>
+  </div>
+</section>
+<section class="wrap section">
+  <h2>Recently joined</h2>
+  <div class="grid">
+    {% for p in featured %}{% include "marketplace/_card.html" %}
+    {% empty %}<p class="muted">No entrepreneurs have been approved yet. Check back soon.</p>{% endfor %}
+  </div>
+</section>
+{% if not user.is_authenticated %}
+<section class="wrap section">
+  <div class="panel callout">
+    <div><h2>Have a skill to sell?</h2><p class="muted">Create a free profile, list your services and products, and take requests from customers in your area.</p></div>
+    <a class="btn primary" href="{% url 'register' %}">Create your profile</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

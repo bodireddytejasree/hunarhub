@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Admin | HunarHub{% endblock %}
+{% block content %}
+<section class="wrap section">
+  <div class="head-row"><h1 class="h-page">Platform overview</h1><a class="btn quiet" href="/admin/">Open full Django admin</a></div>
+  <div class="stats">
+    <div class="stat"><b>{{ stats.entrepreneurs }}</b><span>Approved entrepreneurs</span></div>
+    <div class="stat"><b>{{ stats.active_users }}</b><span>Active users in the last 30 days</span></div>
+    <div class="stat"><b>{{ stats.conversion }}%</b><span>Requests accepted or completed, of {{ stats.total_requests }}</span></div>
+    <div class="stat"><b>{{ stats.units }}</b><span>Products sold, worth ₹{{ stats.sales_value|floatformat:"-2" }}</span></div>
+    <div class="stat"><b>₹{{ stats.avg_earnings }}</b><span>Average earnings per entrepreneur</span></div>
+    <div class="stat"><b>{% if stats.avg_rating %}{{ stats.avg_rating|floatformat:1 }}{% else %}None yet{% endif %}</b><span>Average customer rating</span></div>
+  </div>
+
+  <h2>Waiting for approval</h2>
+  <div class="stack">
+    {% for p in pending %}
+    <div class="panel row"><div class="item-main"><h3>{{ p.business_name }}</h3><p class="muted">{{ p.category }} in {{ p.location }}. Account: {{ p.user.username }}</p></div>
+      <div class="actions"><a class="btn small quiet" href="{% url 'entrepreneur_detail' p.pk %}">Review profile</a>
+      <form method="post" action="{% url 'admin_verify' p.pk 'approve' %}">{% csrf_token %}<button class="btn small primary">Approve</button></form></div></div>
+    {% empty %}<p class="muted">Nothing is waiting for approval.</p>{% endfor %}
+  </div>
+
+  <h2>Open complaints</h2>
+  <div class="stack">
+    {% for c in complaints %}
+    <div class="panel">
+      <h3>{{ c.subject }}</h3>
+      <p class="muted">{{ c.customer.username }} about <a href="{% url 'entrepreneur_detail' c.entrepreneur.pk %}">{{ c.entrepreneur.business_name }}</a>, {{ c.created_at|date:"j M Y" }}</p>
+      <p>{{ c.details }}</p>
+      <form method="post" action="{% url 'complaint_resolve' c.pk %}" class="inline-form">{% csrf_token %}
+        <input name="admin_note" placeholder="Note on how this was resolved" aria-label="Resolution note"><button class="btn small primary">Mark resolved</button></form>
+    </div>
+    {% empty %}<p class="muted">No open complaints.</p>{% endfor %}
+  </div>
+
+  <h2>Recent service requests</h2>
+  <div class="stack">
+    {% for r in recent_requests %}<div class="panel row"><div class="item-main"><h3>{{ r.service.title }}</h3><p class="muted">{{ r.customer.username }} to {{ r.service.entrepreneur.business_name }}</p></div><span class="badge {{ r.status }}">{{ r.get_status_display }}</span></div>
+    {% empty %}<p class="muted">No requests yet.</p>{% endfor %}
+  </div>
+  <h2>Recent orders</h2>
+  <div class="stack">
+    {% for o in recent_orders %}<div class="panel row"><div class="item-main"><h3>{{ o.quantity }} x {{ o.product.name }}</h3><p class="muted">{{ o.customer.username }} from {{ o.product.entrepreneur.business_name }}</p></div><div class="price">₹{{ o.total_price|floatformat:"-2" }}</div><span class="badge {{ o.status }}">{{ o.get_status_display }}</span></div>
+    {% empty %}<p class="muted">No orders yet.</p>{% endfor %}
+  </div>
+
+  <h2>Approved entrepreneurs</h2>
+  <div class="stack">
+    {% for p in approved %}<div class="panel row"><div class="item-main"><h3><a href="{% url 'entrepreneur_detail' p.pk %}">{{ p.business_name }}</a></h3><p class="muted">{{ p.category }} in {{ p.location }}</p></div>
+      <form method="post" action="{% url 'admin_verify' p.pk 'revoke' %}">{% csrf_token %}<button class="btn small quiet">Remove approval</button></form></div>
+    {% empty %}<p class="muted">No approved entrepreneurs yet.</p>{% endfor %}
+  </div>
+
+  <h2>Categories</h2>
+  <form method="post" action="{% url 'category_add' %}" class="inline-form">{% csrf_token %}
+    <input name="name" placeholder="New category, for example Weaver" aria-label="New category" required><button class="btn primary">Add category</button></form>
+  <div class="chips plain">
+    {% for c in categories %}<form method="post" action="{% url 'category_delete' c.pk %}">{% csrf_token %}<span>{{ c.name }}</span><button class="linkbtn" aria-label="Delete {{ c.name }}">Delete</button></form>{% endfor %}
+  </div>
+</section>
+{% endblock %}

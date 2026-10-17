@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ p.business_name }} | HunarHub{% endblock %}
+{% block content %}
+<section class="wrap section">
+  {% if not p.is_verified %}<div class="msg info">This profile is waiting for admin approval. Only you and admins can see it.</div>{% endif %}
+  <div class="panel profile-head">
+    <div class="avatar big">{% if p.photo %}<img src="{{ p.photo.url }}" alt="">{% else %}{{ p.business_name|slice:":1" }}{% endif %}</div>
+    <div>
+      <h1 class="h-page">{{ p.business_name }}</h1>
+      <p class="muted">{{ p.category }} in {{ p.location }}. {{ p.experience_years }} years of experience.</p>
+      <p class="meta">
+        <span>{% if p.avg_rating %}Rated {{ p.avg_rating|floatformat:1 }} of 5 by {{ review_count }} customer{{ review_count|pluralize }}{% else %}No ratings yet{% endif %}</span>
+        <span class="badge {% if p.is_available %}accepted{% else %}rejected{% endif %}">{% if p.is_available %}Taking requests{% else %}Not taking requests{% endif %}</span>
+      </p>
+    </div>
+  </div>
+  {% if p.bio %}<p class="bio">{{ p.bio|linebreaksbr }}</p>{% endif %}
+
+  <h2>Services</h2>
+  <div class="stack">
+    {% for s in services %}
+    <div class="panel item">
+      <div class="item-main"><h3>{{ s.title }}</h3><p class="muted">{{ s.description }}</p></div>
+      <div class="price">₹{{ s.price|floatformat:"-2" }}</div>
+      {% if can_order %}
+      <form method="post" action="{% url 'request_service' s.pk %}" class="inline-form">{% csrf_token %}
+        <input name="message" placeholder="What do you need done?" maxlength="500" aria-label="Message">
+        <input type="date" name="preferred_date" aria-label="Preferred date">
+        <button class="btn primary">Request this service</button>
+      </form>
+      {% elif not user.is_authenticated %}<a class="btn quiet" href="{% url 'login' %}?next={{ request.path }}">Log in to request</a>{% endif %}
+    </div>
+    {% empty %}<p class="muted">No services listed.</p>{% endfor %}
+  </div>
+
+  <h2>Products</h2>
+  <div class="grid">
+    {% for pr in products %}
+    <div class="panel product">
+      {% if pr.image %}<img src="{{ pr.image.url }}" alt="{{ pr.name }}">{% else %}<div class="noimg">{{ pr.name|slice:":1" }}</div>{% endif %}
+      <h3>{{ pr.name }}</h3><p class="muted">{{ pr.description }}</p>
+      <p class="price">₹{{ pr.price|floatformat:"-2" }} <small class="muted">{{ pr.stock }} in stock</small></p>
+      {% if can_order and pr.stock > 0 %}
+      <form method="post" action="{% url 'buy_product' pr.pk %}" class="inline-form">{% csrf_token %}
+        <input type="number" name="quantity" value="1" min="1" max="{{ pr.stock }}" aria-label="Quantity">
+        <button class="btn primary">Buy</button>
+      </form>
+      {% elif pr.stock == 0 %}<span class="badge rejected">Out of stock</span>
+      {% elif not user.is_authenticated %}<a class="btn quiet" href="{% url 'login' %}?next={{ request.path }}">Log in to buy</a>{% endif %}
+    </div>
+    {% empty %}<p class="muted">No products listed.</p>{% endfor %}
+  </div>
+
+  <h2 id="reviews">Reviews</h2>
+  {% for r in reviews %}
+    <div class="panel review"><strong>{{ r.rating }} out of 5</strong> <span class="muted">by {{ r.customer.username }}</span><p>{{ r.comment }}</p></div>
+  {% empty %}<p class="muted">No reviews yet.</p>{% endfor %}
+  {% if can_review %}
+  <form method="post" action="{% url 'add_review' p.pk %}" class="panel form">{% csrf_token %}
+    <h3>Rate your experience</h3>{{ review_form.as_p }}<button class="btn primary">Post review</button>
+  </form>
+  {% elif is_customer %}<p class="muted">You can review this business after a request or order is completed.</p>{% endif %}
+  {% if is_customer %}<p><a href="{% url 'file_complaint' p.pk %}">Report a problem with this business</a></p>{% endif %}
+</section>
+{% endblock %}

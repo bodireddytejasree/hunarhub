@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Find talent | HunarHub{% endblock %}
+{% block content %}
+<section class="wrap section">
+  <h1 class="h-page">Find local talent</h1>
+  <form method="get" class="panel filters">
+    <div class="field"><label for="q">Skill or product</label><input id="q" name="q" value="{{ g.q }}"></div>
+    <div class="field"><label for="category">Skill type</label>
+      <select id="category" name="category"><option value="">All skills</option>
+        {% for c in categories %}<option value="{{ c.pk }}" {% if g.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="location">Location</label><input id="location" name="location" value="{{ g.location }}"></div>
+    <div class="field"><label for="min">Lowest price (₹)</label><input id="min" name="min" type="number" min="0" value="{{ g.min }}"></div>
+    <div class="field"><label for="max">Highest price (₹)</label><input id="max" name="max" type="number" min="0" value="{{ g.max }}"></div>
+    <div class="actions"><button class="btn primary">Apply filters</button><a class="btn quiet" href="{% url 'browse' %}">Clear</a></div>
+  </form>
+  <div class="grid">
+    {% for p in results %}{% include "marketplace/_card.html" %}
+    {% empty %}<p class="muted">No one matches those filters. Try a wider price range or remove the location.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

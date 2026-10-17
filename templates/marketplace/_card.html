@@ -1,0 +1,11 @@
+<a class="card" href="{% url 'entrepreneur_detail' p.pk %}">
+  <div class="avatar">{% if p.photo %}<img src="{{ p.photo.url }}" alt="">{% else %}{{ p.business_name|slice:":1" }}{% endif %}</div>
+  <div>
+    <h3>{{ p.business_name }}</h3>
+    <p class="muted">{{ p.category }} in {{ p.location }}</p>
+    <p class="meta">
+      <span>{% if p.avg_rating %}Rated {{ p.avg_rating|floatformat:1 }} of 5{% else %}No ratings yet{% endif %}</span>
+      {% if not p.is_available %}<span class="badge rejected">Not taking requests</span>{% endif %}
+    </p>
+  </div>
+</a>

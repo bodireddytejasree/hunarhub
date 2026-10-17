@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}My requests and orders | HunarHub{% endblock %}
+{% block content %}
+<section class="wrap section">
+  <h1 class="h-page">My requests and orders</h1>
+  <h2>Service requests</h2>
+  <div class="stack">
+    {% for r in requests %}
+    <div class="panel row">
+      <div class="item-main"><h3>{{ r.service.title }}</h3>
+        <p class="muted"><a href="{% url 'entrepreneur_detail' r.service.entrepreneur.pk %}">{{ r.service.entrepreneur.business_name }}</a>, sent {{ r.created_at|date:"j M Y" }}</p></div>
+      <div class="price">₹{{ r.service.price|floatformat:"-2" }}</div>
+      <span class="badge {{ r.status }}">{{ r.get_status_display }}</span>
+      <div class="actions">
+        {% if r.status == 'pending' %}<form method="post" action="{% url 'request_action' r.pk 'cancel' %}">{% csrf_token %}<button class="btn small quiet">Cancel</button></form>{% endif %}
+        {% if r.status == 'completed' %}<a class="btn small primary" href="{% url 'entrepreneur_detail' r.service.entrepreneur.pk %}#reviews">Leave a review</a>{% endif %}
+      </div>
+    </div>
+    {% empty %}<p class="muted">You have not requested any services yet. <a href="{% url 'browse' %}">Find talent</a></p>{% endfor %}
+  </div>
+  <h2>Product orders</h2>
+  <div class="stack">
+    {% for o in orders %}
+    <div class="panel row">
+      <div class="item-main"><h3>{{ o.quantity }} x {{ o.product.name }}</h3>
+        <p class="muted"><a href="{% url 'entrepreneur_detail' o.product.entrepreneur.pk %}">{{ o.product.entrepreneur.business_name }}</a>, ordered {{ o.created_at|date:"j M Y" }}</p></div>
+      <div class="price">₹{{ o.total_price|floatformat:"-2" }}</div>
+      <span class="badge {{ o.status }}">{{ o.get_status_display }}</span>
+      <div class="actions">
+        {% if o.status == 'placed' %}<form method="post" action="{% url 'order_action' o.pk 'cancel' %}">{% csrf_token %}<button class="btn small quiet">Cancel</button></form>{% endif %}
+        {% if o.status == 'completed' %}<a class="btn small primary" href="{% url 'entrepreneur_detail' o.product.entrepreneur.pk %}#reviews">Leave a review</a>{% endif %}
+      </div>
+    </div>
+    {% empty %}<p class="muted">You have not ordered any products yet.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}
